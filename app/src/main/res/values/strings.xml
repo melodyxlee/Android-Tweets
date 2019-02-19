@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Android Tweets</string>
+    <string name="login">Login</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="tweets_title">Android Tweets in %1$s</string>
+    <string name="title_activity_maps">Map</string>
 </resources>
