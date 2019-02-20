@@ -60,9 +60,9 @@ class MainActivity : AppCompatActivity() {
             Log.d("MainActivity", "Login clicked!")
             progressBar.visibility = View.VISIBLE
 
-//            val intent: Intent = Intent(this, TweetsActivity::class.java)
-//            intent.putExtra("location", "Washington, D.C.")
-//            startActivity(intent)
+            val intent: Intent = Intent(this, MapsActivity::class.java)
+            //intent.putExtra("location", "Washington, D.C.")
+            startActivity(intent)
 
             // Short message that pops near bottom of screen
             val toast = Toast.makeText(this, "This is a Toast message", Toast.LENGTH_SHORT)
