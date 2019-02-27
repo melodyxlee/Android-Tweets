@@ -8,6 +8,10 @@ package edu.gwu.androidtweets
 }*/
 
 // Getters, setters, equals, hashcode, toString all generated automatically for a data class
-data class Tweet (val username: String, val handle: String, val content: String, val iconUrl: String) {
-
-}
+// Data class uses parentheses
+data class Tweet (
+    val username: String,
+    val handle: String,
+    val content: String,
+    val iconUrl: String
+)

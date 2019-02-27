@@ -5,14 +5,32 @@ import android.support.v7.app.AppCompatActivity
 import android.content.Intent
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.LinearLayoutManager
+import android.widget.Toast
 
 class TweetsActivity : AppCompatActivity() {
+
+    private val twitterManager: TwitterManager = TwitterManager()
 
     private lateinit var recyclerView: RecyclerView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tweets)
+
+        twitterManager.retrieveOAuthToken(
+            successCallback = { token ->
+                // Runs if we successfully retrieved a token
+                runOnUiThread {
+                    Toast.makeText(this, "Token: $token", Toast.LENGTH_LONG).show()
+                }
+            },
+            errorCallback = {
+                // Runs if we have an error
+                runOnUiThread {
+                    Toast.makeText(this, "Error performing OAuth", Toast.LENGTH_LONG).show()
+                }
+            }
+        )
 
         recyclerView = findViewById(R.id.recyclerView)
 

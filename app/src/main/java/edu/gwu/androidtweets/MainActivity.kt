@@ -60,8 +60,8 @@ class MainActivity : AppCompatActivity() {
             Log.d("MainActivity", "Login clicked!")
             progressBar.visibility = View.VISIBLE
 
-            val intent: Intent = Intent(this, MapsActivity::class.java)
-            //intent.putExtra("location", "Washington, D.C.")
+            val intent: Intent = Intent(this, TweetsActivity::class.java)
+            intent.putExtra("location", "Washington, D.C.")
             startActivity(intent)
 
             // Short message that pops near bottom of screen
@@ -79,12 +79,12 @@ class MainActivity : AppCompatActivity() {
             // Writing to preferences (make sure you call apply)
             sharedPrefs.edit().putString("username", username.text.toString()).apply()
 
-            // Using ACTION_SEND to send plain text content
-            val sendIntent = Intent()
-            intent.action = Intent.ACTION_SEND
-            intent.type = "text/plain"
-            intent.putExtra(Intent.EXTRA_TEXT, "Android Tweets is a great app!")
-            startActivity(sendIntent)
+//            // Using ACTION_SEND to send plain text content
+//            val sendIntent = Intent()
+//            intent.action = Intent.ACTION_SEND
+//            intent.type = "text/plain"
+//            intent.putExtra(Intent.EXTRA_TEXT, "Android Tweets is a great app!")
+//            startActivity(sendIntent)
 
         }
     }
