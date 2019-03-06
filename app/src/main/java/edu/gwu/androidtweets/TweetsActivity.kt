@@ -3,6 +3,7 @@ package edu.gwu.androidtweets
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.content.Intent
+import android.location.Address
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.LinearLayoutManager
 import android.widget.Toast
@@ -17,8 +18,35 @@ class TweetsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tweets)
 
+        recyclerView = findViewById(R.id.recyclerView)
+
+        // Set the direction of our list to be vertical
+        recyclerView.layoutManager = LinearLayoutManager(this)
+
+        // From lecture 3
+        val intent: Intent = intent
+        val location: Address = intent.getParcelableExtra("location")
+
+        title = getString(R.string.tweets_title, location.getAddressLine(0))
+
         twitterManager.retrieveOAuthToken(
             successCallback = { token ->
+
+                twitterManager.retrieveTweets(
+                    oAuthToken = token,
+                    address = location,
+                    successCallback = { tweets ->
+                        runOnUiThread {
+                            // Create the adapter and assign it to recyclerView
+                            recyclerView.adapter = TweetsAdapter(tweets)
+                        }
+                    },
+                    errorCallback = {
+                        runOnUiThread {
+                            Toast.makeText(this, "Error retrieving Tweets", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                )
                 // Runs if we successfully retrieved a token
                 runOnUiThread {
                     Toast.makeText(this, "Token: $token", Toast.LENGTH_LONG).show()
@@ -32,26 +60,12 @@ class TweetsActivity : AppCompatActivity() {
             }
         )
 
-        recyclerView = findViewById(R.id.recyclerView)
-
-        // Set the direction of our list to be vertical
-        recyclerView.layoutManager = LinearLayoutManager(this)
-
-        val tweets = generateFakeTweets()
-
-        // Create the adapter and assign it to recyclerView
-        recyclerView.adapter = TweetsAdapter(tweets)
-
-        // From lecture 3
-        val intent: Intent = getIntent()
-        val location: String = intent.getStringExtra("location")
-
         // $ replaces concatenation with +
         // {} allows you to call functions within
         // title = "Android Tweets in ${location.toUpperCase()}"
 
         // Get the string from strings.xml
-        title = getString(R.string.tweets_title, location)
+//        title = getString(R.string.tweets_title, location)
     }
 
     private fun generateFakeTweets(): List<Tweet> {

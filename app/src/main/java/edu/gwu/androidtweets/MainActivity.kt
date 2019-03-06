@@ -60,8 +60,9 @@ class MainActivity : AppCompatActivity() {
             Log.d("MainActivity", "Login clicked!")
             progressBar.visibility = View.VISIBLE
 
-            val intent: Intent = Intent(this, TweetsActivity::class.java)
-            intent.putExtra("location", "Washington, D.C.")
+//            val intent: Intent = Intent(this, TweetsActivity::class.java)
+//            intent.putExtra("location", "Washington, D.C.")
+            val intent: Intent = Intent(this, MapsActivity::class.java)
             startActivity(intent)
 
             // Short message that pops near bottom of screen
@@ -82,7 +83,7 @@ class MainActivity : AppCompatActivity() {
 //            // Using ACTION_SEND to send plain text content
 //            val sendIntent = Intent()
 //            intent.action = Intent.ACTION_SEND
-//            intent.type = "text/plain"
+//            sendIntent.type = "text/plain"
 //            intent.putExtra(Intent.EXTRA_TEXT, "Android Tweets is a great app!")
 //            startActivity(sendIntent)
 

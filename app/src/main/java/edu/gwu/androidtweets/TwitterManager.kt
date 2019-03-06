@@ -1,5 +1,6 @@
 package edu.gwu.androidtweets
 
+import android.location.Address
 import okhttp3.*
 import okhttp3.logging.HttpLoggingInterceptor
 import org.json.JSONObject
@@ -45,6 +46,7 @@ class TwitterManager {
             successCallback(oAuthToken!!)
             return
         }
+        // 1. Build the request
         val encodedKey = "TEtwV0l1ZlJ4bWpOY1kwSUlCeVJVblR2NDo1UGY4SXVvdEdjSHJpelZncHRNSVlkOGI2SHlRTGNvbXBjeTNZd1Q4WkFMbU9zandBNA=="
 
         val request: Request = Request.Builder()
@@ -57,66 +59,111 @@ class TwitterManager {
                 )
             )
             .build()
-        val response = okHttpClient.newCall(request).execute()
-        val responseBody = response.body()?.string()
-        if (response.isSuccessful && responseBody != null) {
 
-            val jsonObject = JSONObject(responseBody)
-            val token = jsonObject.getString("access_token")
+        // 2. Execute the request
+        okHttpClient.newCall(request).enqueue(
+            object : Callback {
+                // 3. Handle any network failures
+                override fun onFailure(call: Call, e: IOException) {
+                    errorCallback(e)
+                }
 
-            oAuthToken = token
-            successCallback(token)
+                // 4. Handle a server response (good or bad)
+                override fun onResponse(call: Call, response: Response) {
+                    val responseBody = response.body()?.string()
+                    if (response.isSuccessful && responseBody != null) {
 
-        } else {
-            errorCallback(Exception("OAuth call failed"))
-        }
+                        val jsonObject = JSONObject(responseBody)
+                        val token = jsonObject.getString("access_token")
+
+                        oAuthToken = token
+                        successCallback(token)
+
+                    } else {
+                        errorCallback(Exception("OAuth call failed"))
+                    }
+                }
+
+            }
+        )
+//        try {
+//           val response: Response = okHttpClient.newCall(request).execute()
+//            // Same as onResponse
+//        } catch (exception: Exception){
+//            // Same as onFailure
+//            errorCallback(exception)
+//        }
+//        val responseBody = response.body()?.string()
 //
-//        okHttpClient.newCall(request).enqueue(
-//            object : Callback {
-//                override fun onFailure(call: Call, e: IOException) {
-//                    errorCallback(e)
-//                }
+//        if (response.isSuccessful && responseBody != null) {
 //
-//                override fun onResponse(call: Call, response: Response) {
-//                    val responseBody = response.body()?.string()
-//                    if (response.isSuccessful && responseBody != null) {
+//            val jsonObject = JSONObject(responseBody)
+//            val token = jsonObject.getString("access_token")
 //
-//                        val jsonObject = JSONObject(responseBody)
-//                        val token = jsonObject.getString("access_token")
+//            oAuthToken = token
+//            successCallback(token)
 //
-//                        oAuthToken = token
-//                        successCallback(token)
-//
-//                    } else {
-//                        errorCallback(Exception("OAuth call failed"))
-//                    }
-//                }
-//
-//            }
-//        )
+//        } else {
+//            errorCallback(Exception("OAuth call failed"))
+//        }
     }
 
     fun retrieveTweets(
-        successCallback: (String) -> Unit,
+        oAuthToken: String,
+        address: Address,
+        successCallback: (List<Tweet>) -> Unit,
         errorCallback: (Exception) -> Unit
     ){
-        retrieveOAuthToken(
-            successCallback = {
-                // Data setup
-                val topic = "Android"
+        // Data setup
+        val lat = address.latitude
+        val lon = address.longitude
+        val topic = "Android"
+        val radius = "30mi"
 
-                // Building the request, passing the OAuth token as a header
-                val request = Request.Builder()
-                    .url("https://api.twitter.com/1.1/search/tweets.json?q=$topic")
-                    .header("Authorization", "Bearer $token")
-                    .build()
+        // Building the request, passing the OAuth token as a header
+        val request = Request.Builder()
+            .url("https://api.twitter.com/1.1/search/tweets.json?q=$topic&geocode=$lat,$lon,$radius")
+            .header("Authorization", "Bearer $oAuthToken")
+            .build()
 
-
-
-            },
-            errorCallback = {exception ->
-                errorCallback(exception)
+        okHttpClient.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                // Similar error handling to last time
             }
-        )
+
+            override fun onResponse(call: Call, response: Response) {
+                // Similar success / error handling to last time
+                val tweets = mutableListOf<Tweet>()
+                val responseString = response.body()?.string()
+
+                if (response.isSuccessful && responseString != null) {
+                    // Parse JSON to only get the info we want
+                    val statuses = JSONObject(responseString).getJSONArray("statuses")
+                    for (i in 0 until statuses.length()) {
+                        val curr = statuses.getJSONObject(i)
+                        val text = curr.getString("text")
+                        val user = curr.getJSONObject("user")
+                        val name = user.getString("name")
+                        val handle = user.getString("screen_name")
+                        val profilePictureUrl = user.getString("profile_image_url")
+                        // Build up array of Tweet objects that will be returned
+                        tweets.add(
+                            Tweet(
+                                iconUrl = profilePictureUrl,
+                                username = name,
+                                handle = handle,
+                                content = text
+                            )
+                        )
+                    }
+                    successCallback(tweets)
+
+                } else {
+                    errorCallback(Exception("Search Tweets call failed"))
+                }
+            }
+        })
+
+
     }
 }

@@ -1,9 +1,11 @@
 package edu.gwu.androidtweets
 
+import android.content.Intent
 import android.location.Address
 import android.location.Geocoder
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.support.v4.content.ContextCompat
 import android.widget.Button
 
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -20,6 +22,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var confirm: Button
 
+    private var currentAddress: Address? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
@@ -30,6 +34,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
+
+        confirm.setOnClickListener {
+            if (currentAddress != null) {
+                val intent = Intent(this, TweetsActivity::class.java)
+                intent.putExtra("location", currentAddress)
+                startActivity(intent)
+            }
+        }
     }
 
     /**
@@ -63,7 +75,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 )
 
                 // Need to check that results array actually has elements
-                val first = results[0]
+                val first: Address = results[0]
+                currentAddress = first
                 val buttonTitle = first.getAddressLine(0)
 
                 // UI can only be updated from the UI Thread
@@ -75,6 +88,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     mMap.addMarker(
                         MarkerOptions().position(coordinates)
                     )
+
+                    updateConfirmButton(first)
                 }
             }
 
@@ -90,5 +105,23 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 //                CameraUpdateFactory.newLatLngZoom(latLng, zoomLevel)
 //            )
         }
+    }
+
+    private fun updateConfirmButton(address: Address) {
+        // Update the button color -- need to load the color from resources first
+        val greenColor = ContextCompat.getColor(
+            this, R.color.button_green
+        )
+        val checkIcon = ContextCompat.getDrawable(
+            this, R.drawable.ic_check_clear_24dp
+        )
+        confirm.setBackgroundColor(greenColor)
+
+        // Update the left-aligned icon
+        confirm.setCompoundDrawablesWithIntrinsicBounds(checkIcon, null, null, null)
+
+        //Update button text
+        confirm.text = address.getAddressLine(0)
+        confirm.isEnabled = true
     }
 }
