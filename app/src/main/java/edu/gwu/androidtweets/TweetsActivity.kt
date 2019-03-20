@@ -12,16 +12,13 @@ class TweetsActivity : AppCompatActivity() {
 
     private val twitterManager: TwitterManager = TwitterManager()
 
+    private val tweetsList: MutableList<Tweet> = mutableListOf()
+
     private lateinit var recyclerView: RecyclerView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tweets)
-
-        recyclerView = findViewById(R.id.recyclerView)
-
-        // Set the direction of our list to be vertical
-        recyclerView.layoutManager = LinearLayoutManager(this)
 
         // From lecture 3
         val intent: Intent = intent
@@ -29,36 +26,54 @@ class TweetsActivity : AppCompatActivity() {
 
         title = getString(R.string.tweets_title, location.getAddressLine(0))
 
-        twitterManager.retrieveOAuthToken(
-            successCallback = { token ->
+        recyclerView = findViewById(R.id.recyclerView)
 
-                twitterManager.retrieveTweets(
-                    oAuthToken = token,
-                    address = location,
-                    successCallback = { tweets ->
-                        runOnUiThread {
-                            // Create the adapter and assign it to recyclerView
-                            recyclerView.adapter = TweetsAdapter(tweets)
+        // Set the direction of our list to be vertical
+        recyclerView.layoutManager = LinearLayoutManager(this)
+
+        if (savedInstanceState != null) {
+            // The screen has rotated, so we should retrieve the previous Tweets
+            val previousTweets: List<Tweet>
+                    = savedInstanceState.getSerializable("TWEETS") as List<Tweet>
+            tweetsList.addAll(previousTweets)
+
+            recyclerView.adapter = TweetsAdapter(tweetsList)
+        } else {
+            // Otherwise, first time activity launch
+            twitterManager.retrieveOAuthToken(
+                successCallback = { token ->
+
+                    twitterManager.retrieveTweets(
+                        oAuthToken = token,
+                        address = location,
+                        successCallback = { tweets ->
+                            runOnUiThread {
+                                tweetsList.clear()
+                                tweetsList.addAll(tweets)
+                                // Create the adapter and assign it to recyclerView
+                                recyclerView.adapter = TweetsAdapter(tweets)
+                            }
+                        },
+                        errorCallback = {
+                            runOnUiThread {
+                                Toast.makeText(this, "Error retrieving Tweets", Toast.LENGTH_LONG).show()
+                            }
                         }
-                    },
-                    errorCallback = {
-                        runOnUiThread {
-                            Toast.makeText(this, "Error retrieving Tweets", Toast.LENGTH_LONG).show()
-                        }
+                    )
+                    // Runs if we successfully retrieved a token
+                    runOnUiThread {
+                        Toast.makeText(this, "Token: $token", Toast.LENGTH_LONG).show()
                     }
-                )
-                // Runs if we successfully retrieved a token
-                runOnUiThread {
-                    Toast.makeText(this, "Token: $token", Toast.LENGTH_LONG).show()
+                },
+                errorCallback = {
+                    // Runs if we have an error
+                    runOnUiThread {
+                        Toast.makeText(this, "Error performing OAuth", Toast.LENGTH_LONG).show()
+                    }
                 }
-            },
-            errorCallback = {
-                // Runs if we have an error
-                runOnUiThread {
-                    Toast.makeText(this, "Error performing OAuth", Toast.LENGTH_LONG).show()
-                }
-            }
-        )
+            )
+        }
+
 
         // $ replaces concatenation with +
         // {} allows you to call functions within
@@ -66,6 +81,14 @@ class TweetsActivity : AppCompatActivity() {
 
         // Get the string from strings.xml
 //        title = getString(R.string.tweets_title, location)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        // An ArrayList implements Serializable and our Tweet class is serializable.
+        // So we can put an ArrayList<Tweet> in the Bundle
+        outState.putSerializable("TWEETS", ArrayList(tweetsList))
     }
 
     private fun generateFakeTweets(): List<Tweet> {
