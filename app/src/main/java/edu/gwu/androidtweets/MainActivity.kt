@@ -10,6 +10,7 @@ import android.view.View
 import android.widget.*
 import android.content.Intent
 import android.support.v7.app.AlertDialog
+import com.google.firebase.auth.FirebaseAuth
 import org.w3c.dom.Text
 
 class MainActivity : AppCompatActivity() {
@@ -18,7 +19,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var username: EditText
     private lateinit var password: EditText
     private lateinit var login: Button
+    private lateinit var signUp: Button
     private lateinit var progressBar : ProgressBar
+    private lateinit var firebaseAuth: FirebaseAuth
 
     // TextWatcher is an interface
     private val textWatcher: TextWatcher = object : TextWatcher {
@@ -40,6 +43,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        firebaseAuth = FirebaseAuth.getInstance()
 
         // Pass the name and the file create mode
         val sharedPrefs = getSharedPreferences("user_settings", Context.MODE_PRIVATE)
@@ -48,6 +52,7 @@ class MainActivity : AppCompatActivity() {
         username = findViewById(R.id.username)
         password = findViewById(R.id.password)
         login = findViewById(R.id.login)
+        signUp = findViewById(R.id.signUp)
         progressBar = findViewById(R.id.progressBar)
 
         username.addTextChangedListener(textWatcher)
@@ -59,6 +64,23 @@ class MainActivity : AppCompatActivity() {
         login.setOnClickListener {
             Log.d("MainActivity", "Login clicked!")
             progressBar.visibility = View.VISIBLE
+
+            val inputtedUsername: String = username.text.toString().trim()
+            val inputtedPassword: String = password.text.toString().trim()
+
+            firebaseAuth.signInWithEmailAndPassword(
+                inputtedUsername,
+                inputtedPassword
+            ).addOnCompleteListener{ task ->
+                if (task.isSuccessful) {
+                    val currentUser = firebaseAuth.currentUser
+                    currentUser!!.sendEmailVerification()
+                    Toast.makeText(this, "Logged in: ${currentUser!!.email}", Toast.LENGTH_LONG).show()
+                } else {
+                    val exception = task.exception
+                    Toast.makeText(this, "Failed to login: $exception", Toast.LENGTH_LONG).show()
+                }
+            }
 
 //            val intent: Intent = Intent(this, TweetsActivity::class.java)
 //            intent.putExtra("location", "Washington, D.C.")
@@ -87,6 +109,28 @@ class MainActivity : AppCompatActivity() {
 //            intent.putExtra(Intent.EXTRA_TEXT, "Android Tweets is a great app!")
 //            startActivity(sendIntent)
 
+        }
+
+        signUp.setOnClickListener {
+            val inputtedUsername: String = username.text.toString().trim()
+            val inputtedPassword: String = password.text.toString().trim()
+
+            firebaseAuth.createUserWithEmailAndPassword(
+                inputtedUsername,
+                inputtedPassword
+            ).addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    // If sign up is succesfful, Firebase automatically logs in as that user too
+                    // (e.g. currentUser is set)
+                    val currentUser = firebaseAuth.currentUser
+                    currentUser!!.sendEmailVerification()
+                    Toast.makeText(this, "Created user: ${currentUser!!.email}", Toast.LENGTH_LONG).show()
+                } else {
+                    val exception = task.exception
+                    Toast.makeText(this, "Failed to register: $exception", Toast.LENGTH_LONG).show()
+                }
+
+            }
         }
     }
 

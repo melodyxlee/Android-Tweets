@@ -22,6 +22,7 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.firebase.auth.FirebaseAuth
 import org.jetbrains.anko.doAsync
 import java.util.jar.Manifest
 
@@ -39,9 +40,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private var currentAddress: Address? = null
 
+    private lateinit var firebaseAuth: FirebaseAuth
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
+
+        firebaseAuth = FirebaseAuth.getInstance()
+        title = "Welcome, ${firebaseAuth.currentUser!!.email}"
 
         confirm = findViewById(R.id.confirm)
         useLocation = findViewById(R.id.current_location)
